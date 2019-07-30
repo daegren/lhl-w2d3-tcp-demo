@@ -73,6 +73,7 @@ const server = net.createServer(socket => {
 
     if (!socket.name) {
       socket.name = command;
+      console.log(`Player ${command} has connected.`);
 
       player = createPlayer(socket.name, socket);
     } else {
@@ -80,21 +81,30 @@ const server = net.createServer(socket => {
 
       if (/^move/i.test(command)) {
         const matches = command.match(/^move ([nesw])$/i);
-        const dir = matches[1];
 
-        if (canMove(player, dir)) {
-          socket.write(`Moving ${dir}\n`);
+        if (matches) {
+          const dir = matches[1];
 
-          move(player, dir);
-        }
+          console.log(`Player ${player.name} is trying to move ${dir}`);
 
-        if (hasPlayerWon(player)) {
-          socket.write(
-            "You've managed to get out of the maze!\nCongratz! 🎉🎉🎉\n"
-          );
-          socket.end();
-          removePlayer(player);
-          return;
+          if (canMove(player, dir)) {
+            socket.write(`Moving ${directionToName(dir)}\n`);
+
+            move(player, dir);
+            console.log(
+              `Player ${player.name} is moving ${directionToName(dir)}`
+            );
+          }
+
+          if (hasPlayerWon(player)) {
+            socket.write(
+              "You've managed to get out of the maze!\nCongratz! 🎉🎉🎉\n"
+            );
+            console.log(`Player ${player.name} has exited the maze!`);
+            socket.end();
+            removePlayer(player);
+            return;
+          }
         }
       }
     }
@@ -104,7 +114,10 @@ const server = net.createServer(socket => {
 
   socket.on("end", () => {
     const player = findPlayer(socket.name);
-    removePlayer(player);
+    if (player) {
+      console.log(`Player ${player.name} has left early`);
+      removePlayer(player);
+    }
   });
 });
 
